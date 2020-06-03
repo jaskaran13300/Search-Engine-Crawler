@@ -40,8 +40,8 @@ if row is None:
     if len(starturl)<1:
         starturl='http://www.chitkara.edu.in/'
     if starturl.endswith('/'):
-        # starturl=starturl[:len(starturl)-1]
-        starturl=starturl[:-1]
+        starturl=starturl[:len(starturl)-1]
+        # starturl=starturl[:-1]
     # print(starturl)
     website=starturl
     # it may be sub page
