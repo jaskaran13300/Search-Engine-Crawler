@@ -12,10 +12,12 @@ ctx.check_hostname = False
 ctx.verify_mode = ssl.CERT_NONE
 
 conn=sqlite3.connect('crawler.sqlite')
+
 cur=conn.cursor()
 
-cur.execute('Drop table if exists pages  ')
-cur.execute('drop table if exists websites  ')
+
+# cur.execute('Drop table if exists pages  ')
+# cur.execute('drop table if exists websites  ')
 
 # create table to store the url's and their html content and error 
 # because we dont want to parse the error pages
