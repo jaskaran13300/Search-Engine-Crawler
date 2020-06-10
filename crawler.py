@@ -16,19 +16,24 @@ conn=sqlite3.connect('crawler.sqlite')
 cur=conn.cursor()
 
 
-# cur.execute('Drop table if exists pages  ')
-# cur.execute('drop table if exists websites  ')
+cur.execute('Drop table if exists pages  ')
+cur.execute('drop table if exists websites  ')
+cur.execute('drop table if exists links')
 
 # create table to store the url's and their html content and error 
 # because we dont want to parse the error pages
 cur.execute(''' 
     create table if not exists pages
-    (id integer primary key autoincrement,url text unique,html text,error integer)
+    (id integer primary key autoincrement,url text unique,html text,error integer,old_rank real,new_rank real)
  ''')
 
 # create table websites to store the particular links to ensure that the website we want to parse is stick with only one particular site
 cur.execute(''' 
     create table if not exists websites(url text unique)
+''')
+
+cur.execute(''' 
+    create table if not exists links(from_id integer,to_id integer)
 ''')
 
 cur.execute(''' select id,url from pages where error is NULL and html is NULL ORDER BY RANDOM() LIMIT 1 ''')
@@ -49,7 +54,7 @@ if row is None:
         pos=starturl.rfind('/')
         website=starturl[:pos]
     cur.execute(''' insert or ignore into websites(url) values(?)''',(website, ))
-    cur.execute(''' insert or ignore into pages (url,html) values(?,NULL)''',(starturl, ))
+    cur.execute(''' insert or ignore into pages (url,html,new_rank) values(?,NULL,1.0)''',(starturl, ))
     conn.commit()
 else:
     print('Restarting the crawler!! Delete crawler.sqlite file for fresh crawl')
@@ -60,7 +65,7 @@ for row in cur:
     # here row will be tuple
     websites.append(str(row[0]))
 
-print('websites r',websites)
+# print('websites r',websites)
 
 pageCount=0
 while True:
@@ -77,10 +82,11 @@ while True:
     if pageCount<=0:
         break
     pageCount=pageCount-1
-    cur.execute('select url from pages where html is NULL and error is NULL order by random() limit 1')
+    cur.execute('select url,id from pages where html is NULL and error is NULL order by random() limit 1')
     try:
         row=cur.fetchone()
-        print('row',row)
+        # print('row',row)
+        from_id=str(row[1])
         notRetreived=str(row[0])
     except:
         print('No unretrieved Page is founded')
@@ -105,13 +111,14 @@ while True:
         print('Program Interupted by user:')
         break
     except:
-        print('Unable to parse ot retreive Document')
+        print('Unable to parse or retreive Document')
         cur.execute('Update pages set error=-1 where url=?',(notRetreived, ))
         conn.commit()
         continue
 
-    cur.execute('insert or ignore into pages (url,html,error) values(?,NULL,NULL)',(notRetreived, ))
+    cur.execute('insert or ignore into pages (url,html,error,new_rank) values(?,NULL,NULL,1.0)',(notRetreived, ))
     cur.execute('update pages set html=? where url=? ',(memoryview(html), notRetreived, ))
+    print(notRetreived)
     conn.commit()
     tags=soup('a')
     # print(tags)
@@ -139,7 +146,15 @@ while True:
         if found is False:
             continue
         # print('sub url is ****** ',subUrl)
-        cur.execute('insert or ignore into pages (url,html,error) values(?,NULL,NULL)',(subUrl, ))
+        cur.execute('insert or ignore into pages (url,html,error,new_rank) values(?,NULL,NULL,1.0)',(subUrl, ))
+        cur.execute('select id from pages where url=? LIMIT 1',(subUrl, ))
+        try:
+            row=cur.fetchone()
+            to_id=row[0]
+        except:
+            print('Could not retreive id')
+            continue
+        cur.execute('insert or ignore into links (from_id,to_id) values(?,?)',(from_id,to_id))
         # pageCount=pageCount-1
         conn.commit()
 cur.close()
