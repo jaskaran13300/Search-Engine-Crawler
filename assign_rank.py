@@ -51,9 +51,13 @@ ival=int(sval)
 if len(prev_ranks)<=0:
     print('Nothing to page rank. Check data')
     quit()
-print(prev_ranks)
-print(links)
+# print(prev_ranks)
+# print(links)
+old_update=dict()
+new_update=dict()
 for i in range(ival):
+    # print('prev ranks is')
+    # print(prev_ranks)
     new_ranks=dict()
     for (node,old_rank) in list(prev_ranks.items()):
         give_ids=list()
@@ -69,7 +73,8 @@ for i in range(ival):
             continue
         total=0.0
         l=0
-        print('give ids are ',give_ids)
+        # print(node,end='  ')
+        # print('give ids are ',give_ids)
         # give ids contains a,c for B
         for idd in give_ids:
             temp=list()
@@ -79,8 +84,25 @@ for i in range(ival):
                         continue
                     else:
                         temp.append(to_id)
+            # print('calculation is')
+            # print(prev_ranks[idd],len(temp))
+            # print(prev_ranks[idd]/len(temp))
             total=total+(prev_ranks[idd]/len(temp))
             # print(len(temp))
+            # print('total become',total)
         new_ranks[node]=total
-        print(new_ranks)    
+    # print('rank calculated')
+    # print(new_ranks)
+    # print(new_ranks)
+    old_update=prev_ranks
+    new_update=new_ranks
+    prev_ranks=new_ranks
+print('****')
+print("Old Ranks",old_update)
+print("New Ranks",new_update)
+for (idd,rank) in old_update.items():
+    cur.execute(''' update pages set old_rank = ? where id= ? ''',(rank,idd, ))
+for (idd,rank) in new_update.items():
+    cur.execute(''' update pages set new_rank = ? where id= ? ''',(rank,idd, ))
 
+conn.commit()
