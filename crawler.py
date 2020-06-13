@@ -1,5 +1,5 @@
 import sqlite3
-import urllib.error
+import urllib.error 
 import ssl
 from urllib.parse import urljoin
 from urllib.parse import urlparse
