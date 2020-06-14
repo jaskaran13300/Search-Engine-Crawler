@@ -106,3 +106,4 @@ for (idd,rank) in new_update.items():
     cur.execute(''' update pages set new_rank = ? where id= ? ''',(rank,idd, ))
 
 conn.commit()
+# File Ended
